@@ -5,6 +5,8 @@ import android.content.SharedPreferences;
 import android.os.Build;
 import android.provider.Settings;
 import java.util.Calendar;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
 public final class Prefs {
@@ -22,6 +24,8 @@ public final class Prefs {
     public static void setThreshold(Context c,int v){sp(c).edit().putInt("threshold",Math.max(1,Math.min(100,v))).apply();}
     public static int getInterval(Context c){return sp(c).getInt("interval",15);}
     public static void setInterval(Context c,int v){sp(c).edit().putInt("interval",Math.max(5,Math.min(3600,v))).apply();}
+    public static int getAlarmSeconds(Context c){return sp(c).getInt("alarm_seconds",7);}
+    public static void setAlarmSeconds(Context c,int v){sp(c).edit().putInt("alarm_seconds",Math.max(1,Math.min(60,v))).apply();}
     public static boolean scheduleOn(Context c){return sp(c).getBoolean("schedule_on",true);}
     public static void setScheduleOn(Context c,boolean v){sp(c).edit().putBoolean("schedule_on",v).apply();}
     public static int getStartMin(Context c){return sp(c).getInt("start_min",7*60+30);}
@@ -30,4 +34,9 @@ public final class Prefs {
     public static boolean inSchedule(Context c){if(!scheduleOn(c))return true;Calendar x=Calendar.getInstance();int now=x.get(Calendar.HOUR_OF_DAY)*60+x.get(Calendar.MINUTE);int s=getStartMin(c),e=getEndMin(c);return s<=e?now>=s&&now<e:now>=s||now<e;}
     public static long getTimerEnd(Context c){return sp(c).getLong("timer_end",0L);}
     public static void setTimerEnd(Context c,long t){sp(c).edit().putLong("timer_end",t).apply();}
+    public static boolean isTimerAlarmed(Context c){return sp(c).getBoolean("timer_alarmed",false);}
+    public static void setTimerAlarmed(Context c,boolean v){sp(c).edit().putBoolean("timer_alarmed",v).apply();}
+    public static Set<String> getHidden(Context c){return new HashSet<>(sp(c).getStringSet("hidden_devices",new HashSet<>()));}
+    public static void hideDevice(Context c,String id){Set<String>s=getHidden(c);s.add(id);sp(c).edit().putStringSet("hidden_devices",s).apply();}
+    public static void clearHidden(Context c){sp(c).edit().remove("hidden_devices").apply();}
 }
