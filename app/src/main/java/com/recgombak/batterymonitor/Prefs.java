@@ -36,6 +36,8 @@ public final class Prefs {
     public static void setTimerEnd(Context c,long t){sp(c).edit().putLong("timer_end",t).apply();}
     public static boolean isTimerAlarmed(Context c){return sp(c).getBoolean("timer_alarmed",false);}
     public static void setTimerAlarmed(Context c,boolean v){sp(c).edit().putBoolean("timer_alarmed",v).apply();}
+    public static boolean isTimerDone(Context c){return sp(c).getBoolean("timer_done",false);}
+    public static void setTimerDone(Context c,boolean v){sp(c).edit().putBoolean("timer_done",v).apply();}
     public static Set<String> getHidden(Context c){return new HashSet<>(sp(c).getStringSet("hidden_devices",new HashSet<>()));}
     public static void hideDevice(Context c,String id){Set<String>s=getHidden(c);s.add(id);sp(c).edit().putStringSet("hidden_devices",s).apply();}
     public static void clearHidden(Context c){sp(c).edit().remove("hidden_devices").apply();}
