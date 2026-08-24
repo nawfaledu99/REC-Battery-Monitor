@@ -10,13 +10,26 @@ android {
         applicationId 'com.recgombak.batterymonitor'
         minSdk 23
         targetSdk 35
-        versionCode 1
-        versionName '1.0'
+        versionCode 8
+        versionName '1.8'
+    }
+
+    signingConfigs {
+        stableDebug {
+            storeFile file('../signing/rec-monitor-debug.keystore')
+            storePassword 'recmonitor123'
+            keyAlias 'recmonitor'
+            keyPassword 'recmonitor123'
+        }
     }
 
     buildTypes {
+        debug {
+            signingConfig signingConfigs.stableDebug
+        }
         release {
             minifyEnabled false
+            signingConfig signingConfigs.stableDebug
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
