@@ -20,13 +20,15 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
-      - name: Build debug APK
+      - name: Restore stable signing key
+        run: base64 -d signing/rec-monitor-debug.keystore.b64 > signing/rec-monitor-debug.keystore
+      - name: Build signed APK
         run: gradle assembleDebug
       - name: Rename APK
-        run: cp app/build/outputs/apk/debug/app-debug.apk REC-Battery-Monitor-v1.0.apk
+        run: cp app/build/outputs/apk/debug/app-debug.apk REC-Battery-Monitor-v1.8.apk
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: REC-Battery-Monitor-v1.0-APK
-          path: REC-Battery-Monitor-v1.0.apk
+          name: REC-Battery-Monitor-v1.8-APK
+          path: REC-Battery-Monitor-v1.8.apk
           if-no-files-found: error
