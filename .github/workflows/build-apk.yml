@@ -25,10 +25,10 @@ jobs:
       - name: Build signed APK
         run: gradle assembleDebug
       - name: Rename APK
-        run: cp app/build/outputs/apk/debug/app-debug.apk REC-Battery-Monitor-v1.8.apk
+        run: cp app/build/outputs/apk/debug/app-debug.apk REC-Battery-Monitor-v2.0.apk
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: REC-Battery-Monitor-v1.8-APK
-          path: REC-Battery-Monitor-v1.8.apk
+          name: REC-Battery-Monitor-v2.0-APK
+          path: REC-Battery-Monitor-v2.0.apk
           if-no-files-found: error
