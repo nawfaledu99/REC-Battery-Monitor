@@ -14,9 +14,7 @@
         <activity android:name=".MainActivity" android:screenOrientation="unspecified" android:exported="true">
             <intent-filter><action android:name="android.intent.action.MAIN" /><category android:name="android.intent.category.LAUNCHER" /></intent-filter>
         </activity>
-        <activity android:name=".ManageDevicesActivity" android:label="Urus Tablet" android:exported="true">
-            <intent-filter><action android:name="android.intent.action.MAIN" /><category android:name="android.intent.category.LAUNCHER" /></intent-filter>
-        </activity>
+        <activity android:name=".ManageDevicesActivity" android:label="Urus Tablet" android:exported="false" />
         <activity android:name=".TimeUpActivity" android:exported="false" android:excludeFromRecents="true" android:showWhenLocked="true" android:turnScreenOn="true" />
         <service android:name=".BatteryBroadcastService" android:enabled="true" android:exported="false" android:foregroundServiceType="dataSync" />
         <receiver android:name=".BootReceiver" android:enabled="true" android:exported="false">
