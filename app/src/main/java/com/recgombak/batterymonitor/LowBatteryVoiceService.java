@@ -1,72 +1,15 @@
 package com.recgombak.batterymonitor;
 
-import android.app.*;
-import android.content.*;
-import android.media.*;
-import android.os.*;
-import android.speech.tts.TextToSpeech;
-import java.util.Locale;
+import android.app.*;import android.content.*;import android.media.*;import android.os.*;import android.speech.tts.TextToSpeech;import java.util.Locale;
 
-public class LowBatteryVoiceService extends Service {
- private static final String CHANNEL="rec_low_battery_voice";
- private BroadcastReceiver receiver;
- private TextToSpeech tts;
- private boolean ttsReady=false, alerted=false;
- private final int threshold=65;
-
- @Override public void onCreate(){
-  super.onCreate();
-  createChannel();
-  startForeground(4101,notification("Memantau bateri tablet"));
-  if(!"tablet".equals(Prefs.getRole(this))){stopSelf();return;}
-  tts=new TextToSpeech(getApplicationContext(),status->{
-   if(status==TextToSpeech.SUCCESS&&tts!=null){
-    ttsReady=true;
-    try{
-     tts.setLanguage(Locale.US);
-     tts.setSpeechRate(0.92f);
-     tts.setAudioAttributes(new AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_ALARM).setContentType(AudioAttributes.CONTENT_TYPE_SPEECH).build());
-    }catch(Exception ignored){}
-    checkBattery();
-   }
-  });
-  receiver=new BroadcastReceiver(){@Override public void onReceive(Context c,Intent i){checkBattery();}};
-  IntentFilter f=new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
-  f.addAction(Intent.ACTION_POWER_CONNECTED);
-  f.addAction(Intent.ACTION_POWER_DISCONNECTED);
-  try{registerReceiver(receiver,f);}catch(Exception ignored){}
- }
-
- private void checkBattery(){
-  Intent i=registerReceiver(null,new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
-  if(i==null)return;
-  int level=i.getIntExtra(BatteryManager.EXTRA_LEVEL,-1),scale=i.getIntExtra(BatteryManager.EXTRA_SCALE,100);
-  int pct=scale>0?Math.round(level*100f/scale):level;
-  int status=i.getIntExtra(BatteryManager.EXTRA_STATUS,-1);
-  boolean charging=status==BatteryManager.BATTERY_STATUS_CHARGING||status==BatteryManager.BATTERY_STATUS_FULL;
-  if(charging||pct>threshold){alerted=false;return;}
-  if(pct>=0&&pct<=threshold&&!alerted&&ttsReady){
-   alerted=true;
-   try{
-    AudioManager am=(AudioManager)getSystemService(AUDIO_SERVICE);
-    am.setStreamVolume(AudioManager.STREAM_ALARM,am.getStreamMaxVolume(AudioManager.STREAM_ALARM),0);
-    tts.speak("Tablet low battery. Please charge.",TextToSpeech.QUEUE_FLUSH,null,"low_battery");
-    ((NotificationManager)getSystemService(NOTIFICATION_SERVICE)).notify(4102,notification("Low battery "+pct+"% — please charge"));
-   }catch(Exception ignored){}
-  }
- }
-
- private void createChannel(){
-  if(Build.VERSION.SDK_INT>=26){
-   NotificationChannel c=new NotificationChannel(CHANNEL,"Tablet Low Battery Voice",NotificationManager.IMPORTANCE_LOW);
-   getSystemService(NotificationManager.class).createNotificationChannel(c);
-  }
- }
- private Notification notification(String text){
-  Notification.Builder b=Build.VERSION.SDK_INT>=26?new Notification.Builder(this,CHANNEL):new Notification.Builder(this);
-  return b.setContentTitle("REC Battery Monitor").setContentText(text).setSmallIcon(android.R.drawable.ic_lock_idle_low_battery).setOngoing(true).build();
- }
- @Override public int onStartCommand(Intent i,int f,int id){return START_STICKY;}
- @Override public void onDestroy(){try{if(receiver!=null)unregisterReceiver(receiver);}catch(Exception ignored){}try{if(tts!=null){tts.stop();tts.shutdown();}}catch(Exception ignored){}super.onDestroy();}
- @Override public IBinder onBind(Intent i){return null;}
+public class LowBatteryVoiceService extends Service{
+ private static final String CHANNEL="rec_battery_voice";private BroadcastReceiver receiver;private TextToSpeech tts;private boolean ready=false;private final Handler h=new Handler(Looper.getMainLooper());
+ private final Runnable check=new Runnable(){public void run(){checkBattery();h.postDelayed(this,30000);}};
+ @Override public void onCreate(){super.onCreate();createChannel();startForeground(4101,note("Memantau bateri tablet"));if(!"tablet".equals(Prefs.getRole(this))){stopSelf();return;}tts=new TextToSpeech(getApplicationContext(),s->{if(s==TextToSpeech.SUCCESS&&tts!=null){ready=true;try{tts.setLanguage(Locale.US);tts.setSpeechRate(.92f);tts.setAudioAttributes(new AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_ALARM).setContentType(AudioAttributes.CONTENT_TYPE_SPEECH).build());}catch(Exception ignored){}checkBattery();}});receiver=new BroadcastReceiver(){public void onReceive(Context c,Intent i){checkBattery();}};IntentFilter f=new IntentFilter(Intent.ACTION_BATTERY_CHANGED);f.addAction(Intent.ACTION_POWER_CONNECTED);f.addAction(Intent.ACTION_POWER_DISCONNECTED);try{registerReceiver(receiver,f);}catch(Exception ignored){}h.post(check);}
+ private void checkBattery(){Intent i=registerReceiver(null,new IntentFilter(Intent.ACTION_BATTERY_CHANGED));if(i==null)return;int l=i.getIntExtra(BatteryManager.EXTRA_LEVEL,-1),s=i.getIntExtra(BatteryManager.EXTRA_SCALE,100),pct=s>0?Math.round(l*100f/s):l,st=i.getIntExtra(BatteryManager.EXTRA_STATUS,-1);boolean charging=st==BatteryManager.BATTERY_STATUS_CHARGING||st==BatteryManager.BATTERY_STATUS_FULL;int low=Prefs.sp(this).getInt("voice_low_threshold",65),full=Prefs.sp(this).getInt("voice_full_threshold",95);boolean lowRepeat=Prefs.sp(this).getBoolean("voice_low_repeat",false),fullRepeat=Prefs.sp(this).getBoolean("voice_full_repeat",false);long lowMs=Prefs.sp(this).getInt("voice_low_repeat_min",3)*60000L,fullMs=Prefs.sp(this).getInt("voice_full_repeat_min",3)*60000L,now=System.currentTimeMillis();long lastLow=Prefs.sp(this).getLong("voice_last_low",0),lastFull=Prefs.sp(this).getLong("voice_last_full",0);if(charging||pct>low)Prefs.sp(this).edit().putLong("voice_last_low",0).apply();else if(pct>=0&&pct<=low&&(lastLow==0||(lowRepeat&&now-lastLow>=lowMs))){speak("Tablet low battery. Please charge.");Prefs.sp(this).edit().putLong("voice_last_low",now).apply();notifyAlert(4102,"Low battery "+pct+"% — please charge");}if(!charging||pct<full)Prefs.sp(this).edit().putLong("voice_last_full",0).apply();else if(pct>=full&&(lastFull==0||(fullRepeat&&now-lastFull>=fullMs))){speak("Battery full. Please unplug the charger.");Prefs.sp(this).edit().putLong("voice_last_full",now).apply();notifyAlert(4103,"Battery "+pct+"% — unplug charger");}}
+ private void speak(String x){if(!ready||tts==null)return;try{AudioManager a=(AudioManager)getSystemService(AUDIO_SERVICE);a.setStreamVolume(AudioManager.STREAM_ALARM,a.getStreamMaxVolume(AudioManager.STREAM_ALARM),0);tts.speak(x,TextToSpeech.QUEUE_FLUSH,null,"battery_voice");}catch(Exception ignored){}}
+ private void notifyAlert(int id,String x){try{((NotificationManager)getSystemService(NOTIFICATION_SERVICE)).notify(id,note(x));}catch(Exception ignored){}}
+ private void createChannel(){if(Build.VERSION.SDK_INT>=26)getSystemService(NotificationManager.class).createNotificationChannel(new NotificationChannel(CHANNEL,"Tablet Battery Voice",NotificationManager.IMPORTANCE_LOW));}
+ private Notification note(String x){Notification.Builder b=Build.VERSION.SDK_INT>=26?new Notification.Builder(this,CHANNEL):new Notification.Builder(this);return b.setContentTitle("REC Battery Monitor").setContentText(x).setSmallIcon(android.R.drawable.ic_lock_idle_low_battery).setOngoing(true).build();}
+ @Override public int onStartCommand(Intent i,int f,int id){return START_STICKY;}@Override public void onDestroy(){h.removeCallbacks(check);try{if(receiver!=null)unregisterReceiver(receiver);}catch(Exception ignored){}try{if(tts!=null){tts.stop();tts.shutdown();}}catch(Exception ignored){}super.onDestroy();}@Override public IBinder onBind(Intent i){return null;}
 }
