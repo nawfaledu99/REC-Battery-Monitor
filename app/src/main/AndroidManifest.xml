@@ -20,6 +20,7 @@
         <activity android:name=".TimeUpActivity" android:exported="false" android:excludeFromRecents="true" android:showWhenLocked="true" android:turnScreenOn="true" />
         <service android:name=".BatteryBroadcastService" android:enabled="true" android:exported="false" android:foregroundServiceType="dataSync" />
         <service android:name=".LowBatteryVoiceService" android:enabled="true" android:exported="false" android:foregroundServiceType="dataSync" />
+        <service android:name=".ConfigAckService" android:enabled="true" android:exported="false" android:foregroundServiceType="dataSync" />
         <receiver android:name=".BootReceiver" android:enabled="true" android:exported="false">
             <intent-filter><action android:name="android.intent.action.BOOT_COMPLETED" /><action android:name="android.intent.action.MY_PACKAGE_REPLACED" /></intent-filter>
         </receiver>
